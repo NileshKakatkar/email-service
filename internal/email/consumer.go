@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	orderevent "github.com/nilesh/shopcore-events/order"
 	"github.com/segmentio/kafka-go"
 	"log"
 	"net/smtp"
@@ -11,19 +12,12 @@ import (
 	"time"
 )
 
-type OrderEvent struct {
-	EventID     string `json:"event_id"`
-	OrderID     string `json:"order_id"`
-	UserID      string `json:"user_id"`
-	Email       string `json:"email"`
-	TotalAmount int64  `json:"total_amount"`
-	Currency    string `json:"currency"`
-}
+type OrderEvent = orderevent.Placed
 
 func RunConsumer(ctx context.Context, cfg Config) {
 	brokers := cfg.Brokers
 	list := strings.Split(brokers, ",")
-	reader := kafka.NewReader(kafka.ReaderConfig{Brokers: list, Topic: "shopcore.order-events", GroupID: "shopcore-email", MinBytes: 1, MaxBytes: 10e6})
+	reader := kafka.NewReader(kafka.ReaderConfig{Brokers: list, Topic: orderevent.PlacedTopic, GroupID: "shopcore-email", MinBytes: 1, MaxBytes: 10e6})
 	defer reader.Close()
 	for {
 		message, err := reader.FetchMessage(ctx)
